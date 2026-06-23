@@ -350,7 +350,21 @@ public partial class MainWindow : Window
         try
         {
             if (!_shellLoaded) await RebuildShellAsync(); else await PushContentAsync();
-            var ok = await Preview.CoreWebView2.PrintToPdfAsync(dlg.FileName, null);
+            // PDF always exports in light mode regardless of the on-screen preview theme.
+            await Preview.CoreWebView2.ExecuteScriptAsync("document.body.className='light';");
+            var print = Preview.CoreWebView2.Environment.CreatePrintSettings();
+            print.ShouldPrintBackgrounds = true;
+            bool ok;
+            try
+            {
+                ok = await Preview.CoreWebView2.PrintToPdfAsync(dlg.FileName, print);
+            }
+            finally
+            {
+                // Restore the live preview to whatever theme the user had selected.
+                await Preview.CoreWebView2.ExecuteScriptAsync(
+                    "document.body.className=" + JsonSerializer.Serialize(_previewDark ? "dark" : "light") + ";");
+            }
             Status(ok ? $"Exported {Path.GetFileName(dlg.FileName)}" : "PDF export failed");
         }
         catch (Exception ex) { Status("PDF export failed: " + ex.Message); }
@@ -575,7 +589,8 @@ public partial class MainWindow : Window
     // ---------- Preview CSS (GitHub-like, dark + light) ----------
     private const string PreviewCss = @"
 :root { color-scheme: light dark; }
-html,body { margin:0; padding:0; }
+html,body { margin:0; padding:0; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+* { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
 .markdown-body {
   box-sizing:border-box; max-width:900px; margin:0 auto; padding:32px 40px;
   font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif; font-size:16px;

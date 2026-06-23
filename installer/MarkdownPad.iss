@@ -3,7 +3,7 @@
 ; publish output, creates shortcuts, and registers .md / .markdown associations.
 
 #define MyAppName "MarkdownPad"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.0.1"
 #define MyAppPublisher "Noam Elisha"
 #define MyAppURL "https://github.com/Noam-Elisha/MarkdownPad"
 #define MyAppExeName "MarkdownPad.exe"
