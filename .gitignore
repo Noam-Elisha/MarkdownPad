@@ -1,0 +1,22 @@
+# Build output
+bin/
+obj/
+publish/
+dist/
+
+# Installer build artifacts (the .exe is attached to GitHub Releases, not committed)
+installer/*.exe
+installer/Output/
+
+# Generated / temporary
+*.preview.png
+*.log
+
+# IDE / user files
+.vs/
+*.user
+*.suo
+
+# OS
+Thumbs.db
+desktop.ini

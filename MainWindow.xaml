@@ -1,0 +1,103 @@
+<Window x:Class="MarkdownPad.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:avalon="http://icsharpcode.net/sharpdevelop/avalonedit"
+        xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+        Title="MarkdownPad" Height="780" Width="1240"
+        Icon="MarkdownPad.ico"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource AppBg}"
+        UseLayoutRounding="True" TextOptions.TextFormattingMode="Display">
+
+  <DockPanel>
+
+    <!-- ===== Toolbar ===== -->
+    <Border DockPanel.Dock="Top" Background="{DynamicResource PanelBg}"
+            BorderBrush="{DynamicResource Border}" BorderThickness="0,0,0,1">
+      <StackPanel>
+
+        <!-- Row 1: file / export / flavor / theme -->
+        <WrapPanel Margin="6,6,6,2" VerticalAlignment="Center">
+          <Button Style="{StaticResource Tool}" Content="New"  Click="New_Click"    ToolTip="New (Ctrl+N)"/>
+          <Button Style="{StaticResource Tool}" Content="Open" Click="Open_Click"   ToolTip="Open (Ctrl+O)"/>
+          <Button Style="{StaticResource Tool}" Content="Save" Click="Save_Click"   ToolTip="Save (Ctrl+S)"/>
+          <Button Style="{StaticResource Tool}" Content="Save As" Click="SaveAs_Click" ToolTip="Save As (Ctrl+Shift+S)"/>
+
+          <Border Style="{StaticResource VSep}"/>
+
+          <TextBlock Style="{StaticResource ToolLabel}" Text="Export:"/>
+          <Button Style="{StaticResource Tool}" Content="HTML" Click="ExportHtml_Click" ToolTip="Export to HTML"/>
+          <Button Style="{StaticResource Tool}" Content="PDF"  Click="ExportPdf_Click"  ToolTip="Export to PDF"/>
+          <Button Style="{StaticResource Tool}" Content="Word" Click="ExportWord_Click" ToolTip="Export to Word (.docx)"/>
+
+          <Border Style="{StaticResource VSep}"/>
+
+          <TextBlock Style="{StaticResource ToolLabel}" Text="Flavor:"/>
+          <ComboBox x:Name="FlavorBox" Width="150" SelectionChanged="Flavor_Changed"/>
+
+          <Border Style="{StaticResource VSep}"/>
+
+          <Button x:Name="AppThemeBtn"     Style="{StaticResource Tool}" Click="AppTheme_Click"     ToolTip="Toggle app light/dark"     Content="App: Dark"/>
+          <Button x:Name="PreviewThemeBtn" Style="{StaticResource Tool}" Click="PreviewTheme_Click" ToolTip="Toggle preview light/dark" Content="Preview: Dark"/>
+        </WrapPanel>
+
+        <!-- Row 2: formatting -->
+        <WrapPanel Margin="6,2,6,6" VerticalAlignment="Center">
+          <Button Style="{StaticResource Tool}" Tag="h1"     Click="Fmt_Click" ToolTip="Heading 1"      Content="H1"/>
+          <Button Style="{StaticResource Tool}" Tag="h2"     Click="Fmt_Click" ToolTip="Heading 2"      Content="H2"/>
+          <Button Style="{StaticResource Tool}" Tag="h3"     Click="Fmt_Click" ToolTip="Heading 3"      Content="H3"/>
+          <Border Style="{StaticResource VSep}"/>
+          <Button Style="{StaticResource Tool}" Tag="bold"   Click="Fmt_Click" ToolTip="Bold (Ctrl+B)"    FontWeight="Bold" Content="B"/>
+          <Button Style="{StaticResource Tool}" Tag="italic" Click="Fmt_Click" ToolTip="Italic (Ctrl+I)"  FontStyle="Italic" Content="I"/>
+          <Button Style="{StaticResource Tool}" Tag="strike" Click="Fmt_Click" ToolTip="Strikethrough"    Content="S"/>
+          <Button Style="{StaticResource Tool}" Tag="code"   Click="Fmt_Click" ToolTip="Inline code"      FontFamily="Consolas" Content="&lt;/&gt;"/>
+          <Border Style="{StaticResource VSep}"/>
+          <Button Style="{StaticResource Tool}" Tag="link"   Click="Fmt_Click" ToolTip="Insert link (Ctrl+K)" Content="Link"/>
+          <Button Style="{StaticResource Tool}" Tag="image"  Click="Fmt_Click" ToolTip="Insert image"     Content="Image"/>
+          <Border Style="{StaticResource VSep}"/>
+          <Button Style="{StaticResource Tool}" Tag="ul"     Click="Fmt_Click" ToolTip="Bulleted list"    Content="&#8226; List"/>
+          <Button Style="{StaticResource Tool}" Tag="ol"     Click="Fmt_Click" ToolTip="Numbered list"    Content="1. List"/>
+          <Button Style="{StaticResource Tool}" Tag="quote"  Click="Fmt_Click" ToolTip="Blockquote"       Content="&#8220; Quote"/>
+          <Button Style="{StaticResource Tool}" Tag="task"   Click="Fmt_Click" ToolTip="Task list item"   Content="Task"/>
+          <Border Style="{StaticResource VSep}"/>
+          <Button Style="{StaticResource Tool}" Tag="codeblock" Click="Fmt_Click" ToolTip="Code block"    Content="Code block"/>
+          <Button Style="{StaticResource Tool}" Tag="table"  Click="Fmt_Click" ToolTip="Insert table"     Content="Table"/>
+          <Button Style="{StaticResource Tool}" Tag="hr"     Click="Fmt_Click" ToolTip="Horizontal rule"  Content="&#8212;"/>
+        </WrapPanel>
+
+      </StackPanel>
+    </Border>
+
+    <!-- ===== Status bar ===== -->
+    <Border DockPanel.Dock="Bottom" Background="{DynamicResource PanelBg}"
+            BorderBrush="{DynamicResource Border}" BorderThickness="0,1,0,0">
+      <Grid Margin="10,4">
+        <TextBlock x:Name="StatusText" Foreground="{DynamicResource MutedFg}" FontSize="12"
+                   Text="Ready" VerticalAlignment="Center"/>
+        <TextBlock x:Name="StatsText" Foreground="{DynamicResource MutedFg}" FontSize="12"
+                   HorizontalAlignment="Right" VerticalAlignment="Center"/>
+      </Grid>
+    </Border>
+
+    <!-- ===== Editor | Splitter | Preview ===== -->
+    <Grid>
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" MinWidth="220"/>
+        <ColumnDefinition Width="6"/>
+        <ColumnDefinition Width="*" MinWidth="220"/>
+      </Grid.ColumnDefinitions>
+
+      <avalon:TextEditor x:Name="Editor" Grid.Column="0"
+                         FontFamily="Cascadia Code, Consolas, Courier New" FontSize="14"
+                         ShowLineNumbers="True" WordWrap="True"
+                         HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
+                         Padding="8,6"/>
+
+      <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Stretch"
+                    Background="{DynamicResource Border}" ShowsPreview="False"/>
+
+      <wv2:WebView2 x:Name="Preview" Grid.Column="2"/>
+    </Grid>
+
+  </DockPanel>
+</Window>

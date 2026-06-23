@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <RootNamespace>MarkdownPad</RootNamespace>
+    <AssemblyName>MarkdownPad</AssemblyName>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>MarkdownPad.ico</ApplicationIcon>
+    <Version>1.0.0</Version>
+    <Authors>Noam Elisha</Authors>
+    <Product>MarkdownPad</Product>
+    <Description>A fast, native Windows Markdown editor with live preview.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AvalonEdit" Version="6.3.0.90" />
+    <PackageReference Include="Markdig" Version="0.37.0" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2792.45" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Markdown.xshd" />
+    <Resource Include="MarkdownPad.ico" />
+  </ItemGroup>
+
+</Project>
