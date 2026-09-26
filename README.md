@@ -11,6 +11,7 @@ A fast, lightweight, native Windows Markdown editor with a live side-by-side pre
 ## Features
 
 - **Live preview** — type Markdown on the left, see it rendered on the right, instantly. Edits update in place without the preview jumping back to the top.
+- **Scroll sync** — the editor and the preview stay lined up as you scroll either one, and the preview keeps the line you're typing in view.
 - **Resizable panes** — drag the divider to give the editor or the preview as much room as you want.
 - **Selectable Markdown flavors** — GitHub (default), CommonMark, Markdown Extra, or Extended (everything on).
 - **Export to HTML, PDF, and Word** — PDF uses the built-in renderer; `.docx` export uses [pandoc](https://pandoc.org/) if it's installed.
@@ -80,6 +81,14 @@ ISCC.exe installer\MarkdownPad.iss
 ```
 
 The resulting `MarkdownPad-Setup-x.y.z.exe` is written to the `installer` folder.
+
+### Changing the icon
+
+The icon is drawn in `assets/icon/`: `icon.svg` is the master artwork, and `icon-16/20/24/32.svg` are pixel-tuned versions for small sizes. Rebuild `MarkdownPad.ico` from them with Node 22+ (it renders through the Microsoft Edge that ships with Windows):
+
+```bash
+node tools/build-icon.mjs
+```
 
 ## Tech stack
 

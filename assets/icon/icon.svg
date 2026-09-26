@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <!-- MarkdownPad icon: a page with a folded corner and the Markdown mark (M over a down arrow).
+       Master artwork for 40px and up; icon-16/20/24/32.svg are pixel-tuned versions of the same design. -->
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#EDF2F8"/>
+    </linearGradient>
+  </defs>
+  <path d="M60 20H164L212 68V220A16 16 0 0 1 196 236H60A16 16 0 0 1 44 220V36A16 16 0 0 1 60 20Z"
+        fill="url(#paper)" stroke="#7D93AB" stroke-width="8" stroke-linejoin="round"/>
+  <path d="M164 20V56A12 12 0 0 0 176 68H212Z" fill="#D6E4F5" stroke="#7D93AB" stroke-width="8" stroke-linejoin="round"/>
+  <g fill="none" stroke="#1F6FEB" stroke-width="20" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M76 150V96L128 136L180 96V150"/>
+    <path d="M104 168L128 190L152 168"/>
+  </g>
+</svg>

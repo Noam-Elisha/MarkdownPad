@@ -26,18 +26,19 @@ public partial class MainWindow : Window
     private bool _shellLoaded;
 
     private readonly DispatcherTimer _renderTimer;
+    private readonly PreviewSync _sync;
     private IHighlightingDefinition? _hl;
     private TaskCompletionSource<bool>? _navTcs;
 
     private static readonly string[] Flavors =
         { "GitHub", "CommonMark", "Markdown Extra", "Extended (all)" };
 
-    public MainWindow()
+    public MainWindow(string? startupFile = null)
     {
         InitializeComponent();
 
         _renderTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(150) };
-        _renderTimer.Tick += (_, _) => { _renderTimer.Stop(); Render(); };
+        _renderTimer.Tick += (_, _) => { _renderTimer.Stop(); Render(revealCaret: true); };
 
         foreach (var f in Flavors) FlavorBox.Items.Add(f);
         FlavorBox.SelectedIndex = 0;
@@ -47,6 +48,7 @@ public partial class MainWindow : Window
         TuneEditorMargins();
 
         Editor.Text = SampleDocument;
+        _sync = new PreviewSync(Editor, Preview);
         Editor.TextChanged += (_, _) =>
         {
             _dirty = true;
@@ -57,7 +59,11 @@ public partial class MainWindow : Window
         };
 
         UpdateStats();
-        Loaded += async (_, _) => await InitWebViewAsync();
+        Loaded += async (_, _) =>
+        {
+            if (startupFile != null) OpenFile(startupFile);
+            await InitWebViewAsync();
+        };
         PreviewKeyDown += Window_PreviewKeyDown;
     }
 
@@ -95,6 +101,7 @@ public partial class MainWindow : Window
             await Preview.EnsureCoreWebView2Async(env);
             Preview.CoreWebView2.Settings.AreDevToolsEnabled = false;
             Preview.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
+            _sync.Attach(Preview.CoreWebView2);
             Preview.CoreWebView2.NavigationCompleted += (_, _) => _navTcs?.TrySetResult(true);
             Preview.NavigationCompleted += (_, _) => _navTcs?.TrySetResult(true);
             // A click on a link inside the document would replace our persistent
@@ -186,33 +193,28 @@ public partial class MainWindow : Window
     }
 
     // ---------- Render preview ----------
-    // The preview page (the "shell": CSS + theme + base href) is navigated only once.
-    // On every edit we push the freshly rendered HTML into the existing DOM, so the
-    // preview never reloads and the scroll position is preserved.
-    private async void Render()
+    // The preview page (the "shell": CSS + theme + base href + sync script) is navigated only
+    // once. On every edit we push the freshly rendered HTML into the existing DOM, so the
+    // preview never reloads; PreviewSync keeps it scrolled in step with the editor.
+    private async void Render(bool revealCaret = false)
     {
         if (!_webReady) return;
         if (!_shellLoaded) { await RebuildShellAsync(); return; }
-        await PushContentAsync();
+        PushContent(revealCaret);
     }
 
     private async Task RebuildShellAsync()
     {
         if (!_webReady) return;
-        await NavigateAsync(WrapHtml(string.Empty));
+        _sync.Reset();
+        await NavigateAsync(WrapHtml(string.Empty, preview: true));
         _shellLoaded = true;
-        await PushContentAsync();
+        PushContent(revealCaret: false);
     }
 
-    private async Task PushContentAsync()
+    private void PushContent(bool revealCaret)
     {
-        try
-        {
-            var body = Markdown.ToHtml(Editor.Text ?? string.Empty, BuildPipeline());
-            var json = JsonSerializer.Serialize(body); // safe JS string literal
-            await Preview.CoreWebView2.ExecuteScriptAsync(
-                "(function(){var c=document.getElementById('content');if(c){c.innerHTML=" + json + ";}})();");
-        }
+        try { _sync.PostContent(Editor.Text ?? string.Empty, BuildPipeline(), revealCaret); }
         catch { /* transient parse states while typing */ }
     }
 
@@ -223,7 +225,7 @@ public partial class MainWindow : Window
         return _navTcs.Task;
     }
 
-    private string WrapHtml(string body)
+    private string WrapHtml(string body, bool preview = false)
     {
         var baseHref = "";
         if (_currentFile != null)
@@ -233,9 +235,10 @@ public partial class MainWindow : Window
                 baseHref = $"<base href=\"file:///{dir.Replace('\\', '/')}/\">";
         }
         var theme = _previewDark ? "dark" : "light";
+        var script = preview ? $"<script>{PreviewSync.Script}</script>" : "";
         return $@"<!DOCTYPE html><html><head><meta charset=""utf-8"">{baseHref}
 <style>{PreviewCss}</style></head>
-<body class=""{theme}""><article id=""content"" class=""markdown-body"">{body}</article></body></html>";
+<body class=""{theme}""><article id=""content"" class=""markdown-body"">{body}</article>{script}</body></html>";
     }
 
     // ---------- Themes ----------
@@ -288,9 +291,8 @@ public partial class MainWindow : Window
     private void New_Click(object s, RoutedEventArgs e)
     {
         if (!ConfirmDiscard()) return;
-        Editor.Text = "";
-        _currentFile = null; _dirty = false; _shellLoaded = false;
-        UpdateTitle(); Render(); Status("New document");
+        LoadDocument("", null);
+        Status("New document");
     }
 
     private void Open_Click(object s, RoutedEventArgs e)
@@ -301,9 +303,31 @@ public partial class MainWindow : Window
             Filter = "Markdown|*.md;*.markdown;*.mdown;*.mkd;*.txt|All files|*.*"
         };
         if (dlg.ShowDialog() != true) return;
-        Editor.Text = File.ReadAllText(dlg.FileName);
-        _currentFile = dlg.FileName; _dirty = false; _shellLoaded = false;
-        UpdateTitle(); Render(); Status($"Opened {Path.GetFileName(_currentFile)}");
+        OpenFile(dlg.FileName);
+    }
+
+    private void OpenFile(string path)
+    {
+        string text;
+        try { text = File.ReadAllText(path); }
+        catch (Exception ex)
+        {
+            ThemedDialog.Show(this, "Couldn't open file",
+                $"{Path.GetFileName(path)} couldn't be opened.\n\n{ex.Message}",
+                new[] { ("OK", "ok", true) }, warning: true);
+            return;
+        }
+        LoadDocument(text, Path.GetFullPath(path));
+        Status($"Opened {Path.GetFileName(_currentFile)}");
+    }
+
+    /// <summary>Replaces the whole document (new/open), as opposed to the user editing it.</summary>
+    private void LoadDocument(string text, string? path)
+    {
+        Editor.Text = text;
+        _renderTimer.Stop(); // the edit render TextChanged just queued is superseded by the full render below
+        _currentFile = path; _dirty = false; _shellLoaded = false;
+        UpdateTitle(); Render();
     }
 
     private void Save_Click(object s, RoutedEventArgs e) => DoSave();
@@ -349,7 +373,9 @@ public partial class MainWindow : Window
         Status("Exporting PDF...");
         try
         {
-            if (!_shellLoaded) await RebuildShellAsync(); else await PushContentAsync();
+            if (!_shellLoaded) await RebuildShellAsync();
+            // Live updates are fire-and-forget; this one is awaited so the PDF has the current text.
+            await Preview.CoreWebView2.ExecuteScriptAsync(_sync.ContentScript(Editor.Text ?? "", BuildPipeline()));
             // PDF always exports in light mode regardless of the on-screen preview theme.
             await Preview.CoreWebView2.ExecuteScriptAsync("document.body.className='light';");
             var print = Preview.CoreWebView2.Environment.CreatePrintSettings();
