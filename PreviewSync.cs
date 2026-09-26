@@ -145,6 +145,21 @@ internal sealed class PreviewSync
         Post(EditorState(withAnchors: resized));
     }
 
+    /// <summary>
+    /// After a jump the user asked for (find), the editor leads and the preview keeps the caret's line
+    /// on screen, as it does for typing. Runs once layout has applied the editor's new scroll position.
+    /// </summary>
+    public void RevealCaret()
+    {
+        EditorTakesLead();
+        _editor.Dispatcher.InvokeAsync(() =>
+        {
+            // Mid-edit the page's anchors are stale; the coming render reveals the caret itself.
+            if (_active && !_textChanged && CaretBand() is Band band)
+                Post(new RevealMessage("reveal", band, EditorState(withAnchors: false)));
+        }, DispatcherPriority.Loaded);
+    }
+
     private void EditorTakesLead()
     {
         if (_editorLeads) return;
@@ -242,4 +257,6 @@ internal sealed class PreviewSync
     private sealed record ContentMessage(string T, int V, string Html, Band? Reveal, EditorMessage Editor);
 
     private sealed record LeadMessage(string T);
+
+    private sealed record RevealMessage(string T, Band Band, EditorMessage Editor);
 }

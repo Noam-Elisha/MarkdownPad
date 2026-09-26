@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:avalon="http://icsharpcode.net/sharpdevelop/avalonedit"
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+        xmlns:local="clr-namespace:MarkdownPad"
         Title="MarkdownPad" Height="780" Width="1240"
         Icon="MarkdownPad.ico"
         WindowStartupLocation="CenterScreen"
@@ -87,11 +88,14 @@
         <ColumnDefinition Width="*" MinWidth="220"/>
       </Grid.ColumnDefinitions>
 
-      <avalon:TextEditor x:Name="Editor" Grid.Column="0"
-                         FontFamily="Cascadia Code, Consolas, Courier New" FontSize="14"
-                         ShowLineNumbers="True" WordWrap="True"
-                         HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
-                         Padding="8,6"/>
+      <DockPanel Grid.Column="0">
+        <local:FindReplaceBar x:Name="FindBar" DockPanel.Dock="Top"/>
+        <avalon:TextEditor x:Name="Editor"
+                           FontFamily="Cascadia Code, Consolas, Courier New" FontSize="14"
+                           ShowLineNumbers="True" WordWrap="True"
+                           HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
+                           Padding="8,6"/>
+      </DockPanel>
 
       <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Stretch"
                     Background="{DynamicResource Border}" ShowsPreview="False"/>

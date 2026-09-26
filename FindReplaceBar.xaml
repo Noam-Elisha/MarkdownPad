@@ -1,0 +1,193 @@
+<UserControl x:Class="MarkdownPad.FindReplaceBar"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Visibility="Collapsed" KeyboardNavigation.TabNavigation="Cycle">
+  <UserControl.Resources>
+
+    <!-- Small icon button (Segoe MDL2 Assets glyphs) -->
+    <Style x:Key="FindIcon" TargetType="ButtonBase">
+      <Setter Property="Foreground" Value="{DynamicResource AppFg}"/>
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="FontFamily" Value="Segoe MDL2 Assets"/>
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="TextOptions.TextRenderingMode" Value="Grayscale"/>
+      <Setter Property="Width" Value="26"/>
+      <Setter Property="Height" Value="26"/>
+      <Setter Property="Focusable" Value="False"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ButtonBase">
+            <Border x:Name="b" Background="{TemplateBinding Background}" CornerRadius="4">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="b" Property="Background" Value="{DynamicResource Hover}"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.4"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- Search options inside the find box: Aa, ab, .* -->
+    <Style x:Key="FindOption" TargetType="ToggleButton">
+      <Setter Property="Foreground" Value="{DynamicResource MutedFg}"/>
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="Width" Value="24"/>
+      <Setter Property="Height" Value="20"/>
+      <Setter Property="Margin" Value="1,0"/>
+      <Setter Property="Focusable" Value="False"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ToggleButton">
+            <Grid>
+              <Border x:Name="fill" Background="{DynamicResource Accent}" CornerRadius="3" Opacity="0"/>
+              <Border x:Name="b" Background="Transparent" BorderBrush="Transparent" BorderThickness="1" CornerRadius="3">
+                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+              </Border>
+            </Grid>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="b" Property="Background" Value="{DynamicResource Hover}"/>
+              </Trigger>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter Property="Foreground" Value="{DynamicResource AppFg}"/>
+                <Setter TargetName="fill" Property="Opacity" Value="0.35"/>
+                <Setter TargetName="b" Property="BorderBrush" Value="{DynamicResource Accent}"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- Frame around a text box; accent when focused, red when the pattern is invalid (Tag="error") -->
+    <Style x:Key="FindInput" TargetType="Border">
+      <Setter Property="Background" Value="{DynamicResource AppBg}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource Border}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="4"/>
+      <Setter Property="Height" Value="28"/>
+      <Setter Property="Padding" Value="6,0,2,0"/>
+      <Style.Triggers>
+        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+          <Setter Property="BorderBrush" Value="{DynamicResource Accent}"/>
+        </Trigger>
+        <Trigger Property="Tag" Value="error">
+          <Setter Property="BorderBrush" Value="#F14C4C"/>
+        </Trigger>
+      </Style.Triggers>
+    </Style>
+
+    <Style x:Key="FindText" TargetType="TextBox">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Foreground" Value="{DynamicResource AppFg}"/>
+      <Setter Property="CaretBrush" Value="{DynamicResource AppFg}"/>
+      <Setter Property="SelectionBrush" Value="{DynamicResource Accent}"/>
+      <Setter Property="FontSize" Value="13"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+
+    <!-- "Find" / "Replace" placeholder, shown while its box is empty -->
+    <Style x:Key="FindHint" TargetType="TextBlock">
+      <Setter Property="Foreground" Value="{DynamicResource MutedFg}"/>
+      <Setter Property="FontSize" Value="13"/>
+      <Setter Property="Margin" Value="3,0,0,0"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+      <Setter Property="IsHitTestVisible" Value="False"/>
+      <Setter Property="Visibility" Value="Collapsed"/>
+    </Style>
+
+  </UserControl.Resources>
+
+  <Border Background="{DynamicResource PanelBg}" BorderBrush="{DynamicResource Border}"
+          BorderThickness="0,0,0,1" Padding="4,5,8,5">
+    <Grid>
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="*"/>
+        <ColumnDefinition Width="Auto"/>
+      </Grid.ColumnDefinitions>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+      </Grid.RowDefinitions>
+
+      <ToggleButton x:Name="ReplaceToggle" Style="{StaticResource FindIcon}" FontSize="10" Margin="0,0,4,0"
+                    Content="&#xE76C;" ToolTip="Toggle Replace (Ctrl+H)" AutomationProperties.Name="Toggle Replace"/>
+
+      <Border x:Name="FindFrame" Grid.Column="1" Style="{StaticResource FindInput}">
+        <DockPanel>
+          <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+            <ToggleButton x:Name="MatchCaseToggle" Style="{StaticResource FindOption}" Content="Aa"
+                          ToolTip="Match Case (Alt+C)" AutomationProperties.Name="Match Case"/>
+            <ToggleButton x:Name="WholeWordToggle" Style="{StaticResource FindOption}"
+                          ToolTip="Match Whole Word (Alt+W)" AutomationProperties.Name="Match Whole Word">
+              <TextBlock Text="ab" TextDecorations="Underline"/>
+            </ToggleButton>
+            <ToggleButton x:Name="RegexToggle" Style="{StaticResource FindOption}" Content=".*"
+                          ToolTip="Use Regular Expression (Alt+R)" AutomationProperties.Name="Use Regular Expression"/>
+          </StackPanel>
+          <Grid>
+            <TextBlock Text="Find">
+              <TextBlock.Style>
+                <Style TargetType="TextBlock" BasedOn="{StaticResource FindHint}">
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding Text, ElementName=FindBox}" Value="">
+                      <Setter Property="Visibility" Value="Visible"/>
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </TextBlock.Style>
+            </TextBlock>
+            <TextBox x:Name="FindBox" Style="{StaticResource FindText}" AutomationProperties.Name="Find"/>
+          </Grid>
+        </DockPanel>
+      </Border>
+
+      <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
+        <TextBlock x:Name="CountText" MinWidth="84" FontSize="12" VerticalAlignment="Center"
+                   Foreground="{DynamicResource MutedFg}"/>
+        <Button x:Name="PrevButton" Style="{StaticResource FindIcon}" Content="&#xE74A;"
+                ToolTip="Previous Match (Shift+Enter)" AutomationProperties.Name="Previous Match"/>
+        <Button x:Name="NextButton" Style="{StaticResource FindIcon}" Content="&#xE74B;"
+                ToolTip="Next Match (Enter)" AutomationProperties.Name="Next Match"/>
+        <Button x:Name="CloseButton" Style="{StaticResource FindIcon}" Content="&#xE711;"
+                ToolTip="Close (Escape)" AutomationProperties.Name="Close"/>
+      </StackPanel>
+
+      <Border x:Name="ReplaceFrame" Grid.Row="1" Grid.Column="1" Style="{StaticResource FindInput}"
+              Margin="0,5,0,0" Visibility="Collapsed">
+        <Grid>
+          <TextBlock Text="Replace">
+            <TextBlock.Style>
+              <Style TargetType="TextBlock" BasedOn="{StaticResource FindHint}">
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding Text, ElementName=ReplaceBox}" Value="">
+                    <Setter Property="Visibility" Value="Visible"/>
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </TextBlock.Style>
+          </TextBlock>
+          <TextBox x:Name="ReplaceBox" Style="{StaticResource FindText}" AutomationProperties.Name="Replace"/>
+        </Grid>
+      </Border>
+
+      <StackPanel x:Name="ReplaceButtons" Grid.Row="1" Grid.Column="2" Orientation="Horizontal"
+                  Margin="8,5,0,0" Visibility="Collapsed">
+        <Button x:Name="ReplaceButton" Style="{StaticResource Tool}" Focusable="False" Content="Replace"
+                ToolTip="Replace (Enter)"/>
+        <Button x:Name="ReplaceAllButton" Style="{StaticResource ToolAccent}" Focusable="False" Content="Replace All"
+                Margin="4,0,0,0" ToolTip="Replace All (Ctrl+Alt+Enter)"/>
+      </StackPanel>
+    </Grid>
+  </Border>
+</UserControl>

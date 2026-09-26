@@ -227,9 +227,22 @@
   new ResizeObserver(relayout).observe(content);
   addEventListener('resize', relayout);
 
+  // The editor jumped somewhere on request (find): keep that line on screen here too. The message
+  // carries the editor's new position, so the preview moves once, straight to it.
+  function onReveal(m) {
+    takeLead('editor');
+    takeEditorState(m.editor);
+    moved = 0;
+    const r = m.band;
+    if (!ready() || !r || !Number.isFinite(r.top) || !Number.isFinite(r.bottom)) return;
+    reveal(r);
+    follow();
+  }
+
   function receive(m) {
     if (m.t === 'content') onContent(m);
     else if (m.t === 'editor') onEditor(m);
+    else if (m.t === 'reveal') onReveal(m);
     else if (m.t === 'lead') takeLead('editor');
   }
   if (host) host.addEventListener('message', e => receive(e.data));

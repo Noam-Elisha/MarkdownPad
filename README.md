@@ -12,6 +12,7 @@ A fast, lightweight, native Windows Markdown editor with a live side-by-side pre
 
 - **Live preview** — type Markdown on the left, see it rendered on the right, instantly. Edits update in place without the preview jumping back to the top.
 - **Scroll sync** — the editor and the preview stay lined up as you scroll either one, and the preview keeps the line you're typing in view.
+- **Find and replace** — `Ctrl+F` / `Ctrl+H` open a find bar above the editor with match case, whole word and regular expressions (with `$1`-style groups in replacements), like VS Code. Replace All is a single undo step.
 - **Resizable panes** — drag the divider to give the editor or the preview as much room as you want.
 - **Selectable Markdown flavors** — GitHub (default), CommonMark, Markdown Extra, or Extended (everything on).
 - **Export to HTML, PDF, and Word** — PDF uses the built-in renderer; `.docx` export uses [pandoc](https://pandoc.org/) if it's installed.
@@ -54,6 +55,11 @@ If you ticked the file-association option during install, MarkdownPad will be re
 | `Ctrl+B` | Bold |
 | `Ctrl+I` | Italic |
 | `Ctrl+K` | Insert link |
+| `Ctrl+F` | Find |
+| `Ctrl+H` | Find and replace |
+| `F3` / `Shift+F3` | Next / previous match |
+
+In the find bar: `Enter` / `Shift+Enter` go to the next / previous match, `Alt+C`, `Alt+W` and `Alt+R` toggle match case, whole word and regex, `Ctrl+Alt+Enter` replaces all, and `Esc` closes it.
 
 ## Building from source
 

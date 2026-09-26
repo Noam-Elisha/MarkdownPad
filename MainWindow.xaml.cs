@@ -49,6 +49,9 @@ public partial class MainWindow : Window
 
         Editor.Text = SampleDocument;
         _sync = new PreviewSync(Editor, Preview);
+        FindBar.Attach(Editor);
+        FindBar.Navigated += _sync.RevealCaret; // the preview shows the match too
+        FindBar.Status += Status;
         Editor.TextChanged += (_, _) =>
         {
             _dirty = true;
@@ -568,17 +571,31 @@ public partial class MainWindow : Window
     // ---------- Keyboard shortcuts ----------
     private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
+        bool inFindBar = FindBar.IsKeyboardFocusWithin;
+        if (e.Key == Key.F3)
+        {
+            if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift)) FindBar.FindPrevious(); else FindBar.FindNext();
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape && FindBar.IsOpen && (inFindBar || Editor.TextArea.IsKeyboardFocusWithin))
+        {
+            FindBar.Close();
+            e.Handled = true;
+        }
+        else if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
         {
             switch (e.Key)
             {
+                case Key.F: FindBar.Open(replace: false); e.Handled = true; break;
+                case Key.H: FindBar.Open(replace: true); e.Handled = true; break;
                 case Key.S when Keyboard.Modifiers.HasFlag(ModifierKeys.Shift): DoSaveAs(); e.Handled = true; break;
                 case Key.S: DoSave(); e.Handled = true; break;
                 case Key.O: Open_Click(sender, e); e.Handled = true; break;
                 case Key.N: New_Click(sender, e); e.Handled = true; break;
-                case Key.B: ApplyFormat("bold"); e.Handled = true; break;
-                case Key.I: ApplyFormat("italic"); e.Handled = true; break;
-                case Key.K: ApplyFormat("link"); e.Handled = true; break;
+                // Formatting applies to the document, so not while typing in the find bar.
+                case Key.B when !inFindBar: ApplyFormat("bold"); e.Handled = true; break;
+                case Key.I when !inFindBar: ApplyFormat("italic"); e.Handled = true; break;
+                case Key.K when !inFindBar: ApplyFormat("link"); e.Handled = true; break;
             }
         }
     }
